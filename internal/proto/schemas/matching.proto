@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package ridematch.matching.v1;
+
+service MatchingService {
+  rpc FindNearestDriver(FindNearestDriverRequest) returns (FindNearestDriverResponse);
+}
+
+message FindNearestDriverRequest {
+  double pickup_lat = 1;
+  double pickup_lng = 2;
+  string rider_id = 3;
+}
+
+message FindNearestDriverResponse {
+  bool found = 1;
+  string driver_id = 2;
+  double lat = 3;
+  double lng = 4;
+  double distance_meters = 5;
+}

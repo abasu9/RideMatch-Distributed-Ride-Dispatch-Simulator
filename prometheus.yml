@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: ridematch-driver
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - driver:9464
+        labels:
+          service_role: driver
+
+  - job_name: ridematch-rider
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - rider:9465
+        labels:
+          service_role: rider
+
+  - job_name: ridematch-matching
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - matching:9466
+        labels:
+          service_role: matching

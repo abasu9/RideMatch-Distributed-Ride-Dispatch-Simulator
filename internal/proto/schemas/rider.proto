@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package ridematch.rider.v1;
+
+service RiderService {
+  rpc RequestRide(RequestRideRequest) returns (RequestRideResponse);
+  rpc GetRideStatus(GetRideStatusRequest) returns (GetRideStatusResponse);
+}
+
+message RequestRideRequest {
+  string rider_id = 1;
+  double pickup_lat = 2;
+  double pickup_lng = 3;
+  double dropoff_lat = 4;
+  double dropoff_lng = 5;
+}
+
+message RequestRideResponse {
+  bool assigned = 1;
+  string ride_id = 2;
+  string driver_id = 3;
+  string status = 4;
+}
+
+message GetRideStatusRequest {
+  string ride_id = 1;
+}
+
+message GetRideStatusResponse {
+  string ride_id = 1;
+  string rider_id = 2;
+  string driver_id = 3;
+  string status = 4;
+  int64 created_at_unix_nano = 5;
+}

@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package ridematch.driver.v1;
+
+enum DriverAvailability {
+  DRIVER_AVAILABILITY_UNSPECIFIED = 0;
+  DRIVER_AVAILABILITY_UNAVAILABLE = 1;
+  DRIVER_AVAILABILITY_AVAILABLE = 2;
+}
+
+service DriverService {
+  rpc RegisterDriver(RegisterDriverRequest) returns (RegisterDriverResponse);
+  rpc UpdateLocation(UpdateLocationRequest) returns (UpdateLocationResponse);
+  rpc GetDriverStatus(GetDriverStatusRequest) returns (GetDriverStatusResponse);
+}
+
+message RegisterDriverRequest {
+  string driver_id = 1;
+}
+
+message RegisterDriverResponse {}
+
+message UpdateLocationRequest {
+  string driver_id = 1;
+  double lat = 2;
+  double lng = 3;
+}
+
+message UpdateLocationResponse {}
+
+message GetDriverStatusRequest {
+  string driver_id = 1;
+}
+
+message GetDriverStatusResponse {
+  string driver_id = 1;
+  double lat = 2;
+  double lng = 3;
+  string h3_cell = 4;
+  DriverAvailability availability = 5;
+  int64 updated_at_unix_nano = 6;
+}

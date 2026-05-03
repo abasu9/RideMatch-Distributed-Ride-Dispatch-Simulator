@@ -1,0 +1,11 @@
+/bin
+/dist
+/.env
+*.log
+.DS_Store
+
+# Cursor IDE (local-only; never commit)
+.cursor/
+.cursorignore
+.cursorrules
+.cursor/rules/

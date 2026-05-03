@@ -1,0 +1,123 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ridematch
+      POSTGRES_USER: ridematch
+      POSTGRES_PASSWORD: ridematch
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ridematch -d ridematch"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.1.7
+    container_name: ridematch-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp
+      - "1"
+      - --memory
+      - 1G
+      - --reserve-memory
+      - 0M
+      - --overprovisioned
+      - --node-id
+      - "0"
+      - --kafka-addr
+      - PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr
+      - PLAINTEXT://redpanda:9092
+    ports:
+      - "9092:9092"
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "4317:4317"
+      - "16686:16686"
+
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  driver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: driver
+    environment:
+      GRPC_ADDR: ":50051"
+      METRICS_HTTP_ADDR: ":9464"
+      REDIS_ADDR: "redis:6379"
+      KAFKA_BROKERS: "redpanda:9092"
+      KAFKA_TOPIC: "driver-locations"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "jaeger:4317"
+      LOG_LEVEL: "info"
+    depends_on:
+      redis:
+        condition: service_started
+      redpanda:
+        condition: service_started
+    ports:
+      - "50051:50051"
+      - "9464:9464"
+
+  matching:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: matching
+    environment:
+      GRPC_ADDR: ":50053"
+      METRICS_HTTP_ADDR: ":9466"
+      REDIS_ADDR: "redis:6379"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "jaeger:4317"
+      LOG_LEVEL: "info"
+    depends_on:
+      redis:
+        condition: service_started
+    ports:
+      - "50053:50053"
+      - "9466:9466"
+
+  rider:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE: rider
+    environment:
+      GRPC_ADDR: ":50052"
+      METRICS_HTTP_ADDR: ":9465"
+      POSTGRES_DSN: "postgres://ridematch:ridematch@postgres:5432/ridematch?sslmode=disable"
+      MATCHING_GRPC_ADDR: "matching:50053"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "jaeger:4317"
+      LOG_LEVEL: "info"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      matching:
+        condition: service_started
+    ports:
+      - "50052:50052"
+      - "9465:9465"
